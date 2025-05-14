@@ -1,0 +1,157 @@
+name: Deploy Infrastructure and Applications
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  AWS_REGION: us-east-1
+  TF_VERSION: 1.5.0
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy-network:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Deploy Network Infrastructure
+        working-directory: terraform/network
+        run: |
+          terraform init
+          terraform plan -out=tfplan
+          terraform apply -auto-approve tfplan
+
+  deploy-database:
+    needs: deploy-network
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Deploy Database Infrastructure
+        working-directory: terraform/database
+        run: |
+          terraform init
+          terraform plan -out=tfplan
+          terraform apply -auto-approve tfplan
+
+  deploy-ecr:
+    needs: deploy-database
+    runs-on: ubuntu-latest
+    outputs:
+      frontend_ecr_repo: ${{ steps.ecr-repos.outputs.frontend_ecr_repo }}
+      backend_ecr_repo: ${{ steps.ecr-repos.outputs.backend_ecr_repo }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Deploy ECR Infrastructure
+        working-directory: terraform/compute/ecr
+        run: |
+          terraform init
+          terraform plan -out=tfplan
+          terraform apply -auto-approve tfplan
+
+      - name: Get ECR Repository URLs
+        id: ecr-repos
+        working-directory: terraform/compute/ecr
+        run: |
+          echo "frontend_ecr_repo=$(terraform output -raw frontend_repository_url)" >> $GITHUB_OUTPUT
+          echo "backend_ecr_repo=$(terraform output -raw backend_repository_url)" >> $GITHUB_OUTPUT
+
+  build-and-push:
+    needs: deploy-ecr
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push Frontend image
+        working-directory: src/frontend
+        run: |
+          docker build -t ${{ needs.deploy-ecr.outputs.frontend_ecr_repo }}:${{ github.sha }} .
+          docker push ${{ needs.deploy-ecr.outputs.frontend_ecr_repo }}:${{ github.sha }}
+
+      - name: Build and push Backend image
+        working-directory: src/backend
+        run: |
+          docker build -t ${{ needs.deploy-ecr.outputs.backend_ecr_repo }}:${{ github.sha }} .
+          docker push ${{ needs.deploy-ecr.outputs.backend_ecr_repo }}:${{ github.sha }}
+
+  deploy-ecs:
+    needs: [build-and-push, deploy-ecr]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Deploy ECS Infrastructure
+        working-directory: terraform/compute/ecs
+        env:
+          TF_VAR_frontend_image: ${{ needs.deploy-ecr.outputs.frontend_ecr_repo }}:${{ github.sha }}
+          TF_VAR_backend_image: ${{ needs.deploy-ecr.outputs.backend_ecr_repo }}:${{ github.sha }}
+        run: |
+          terraform init
+          terraform plan -out=tfplan
+          terraform apply -auto-approve tfplan 
