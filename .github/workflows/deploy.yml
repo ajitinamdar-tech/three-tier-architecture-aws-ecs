@@ -94,25 +94,12 @@ jobs:
 
       - name: Get ECR Repository URLs
         id: ecr-repos
+        env:
+          TF_LOG: ERROR
         working-directory: terraform/compute/ecr
         run: |
-          set -e
-
-          FRONTEND_URL=$(TF_LOG=ERROR terraform output -json frontend_repository_url | jq -r .value)
-          if [ -z "$FRONTEND_URL" ] || [ "$FRONTEND_URL" == "null" ]; then
-            echo "Error: Terraform output 'frontend_repository_url' is empty or null after jq parsing."
-            TF_LOG=ERROR terraform output -json frontend_repository_url # Print raw output for debugging
-            exit 1
-          fi
-          echo "frontend_ecr_repo=$FRONTEND_URL" >> $GITHUB_OUTPUT
-
-          BACKEND_URL=$(TF_LOG=ERROR terraform output -json backend_repository_url | jq -r .value)
-          if [ -z "$BACKEND_URL" ] || [ "$BACKEND_URL" == "null" ]; then
-            echo "Error: Terraform output 'backend_repository_url' is empty or null after jq parsing."
-            TF_LOG=ERROR terraform output -json backend_repository_url # Print raw output for debugging
-            exit 1
-          fi
-          echo "backend_ecr_repo=$BACKEND_URL" >> $GITHUB_OUTPUT
+          echo "frontend_ecr_repo=$(terraform output -raw frontend_repository_url)" >> $GITHUB_OUTPUT
+          echo "backend_ecr_repo=$(terraform output -raw backend_repository_url)" >> $GITHUB_OUTPUT
 
   build-and-push:
     needs: deploy-ecr
