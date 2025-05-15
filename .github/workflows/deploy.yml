@@ -94,12 +94,12 @@ jobs:
 
       - name: Get ECR Repository URLs
         id: ecr-repos
+        env:
+          TF_LOG: ERROR
         working-directory: terraform/compute/ecr
         run: |
-          FRONTEND=$(terraform output -raw frontend_repository_url | sed 's/::/%3A%3A/g')
-          BACKEND=$(terraform output -raw backend_repository_url | sed 's/::/%3A%3A/g')
-          echo "frontend_ecr_repo=$FRONTEND" >> $GITHUB_OUTPUT
-          echo "backend_ecr_repo=$BACKEND" >> $GITHUB_OUTPUT
+          echo "frontend_ecr_repo=$(terraform output frontend_repository_url)" >> $GITHUB_OUTPUT
+          echo "backend_ecr_repo=$(terraform output backend_repository_url)" >> $GITHUB_OUTPUT
 
   build-and-push:
     needs: deploy-ecr
