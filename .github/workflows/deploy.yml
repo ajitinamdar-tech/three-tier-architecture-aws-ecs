@@ -43,6 +43,8 @@ jobs:
   deploy-database:
     needs: deploy-network
     runs-on: ubuntu-latest
+    env:
+      TF_VAR_database_password: ${{ secrets.DB_PASSWORD }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
