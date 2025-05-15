@@ -73,14 +73,7 @@ variable "backend_container_port" {
   default     = 8080 # Adjust if your backend listens on a different port
 }
 
-variable "database_host" {
-  description = "The hostname of the database."
-  type        = string
-  # No default; this should ideally be an output from your database Terraform module
-  # and passed here or fetched via terraform_remote_state.
-}
-
-variable "database_user" {
+variable "db_user" {
   description = "The username for the database."
   type        = string
   # No default.
@@ -93,7 +86,7 @@ variable "db_password" {
   # No default.
 }
 
-variable "database_name" {
+variable "db_name" {
   description = "The name of the database."
   type        = string
   # No default.
