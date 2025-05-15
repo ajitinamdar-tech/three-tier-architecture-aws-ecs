@@ -96,8 +96,21 @@ jobs:
         id: ecr-repos
         working-directory: terraform/compute/ecr
         run: |
-          echo "frontend_ecr_repo=$(terraform output -raw frontend_repository_url)" >> $GITHUB_OUTPUT
-          echo "backend_ecr_repo=$(terraform output -raw backend_repository_url)" >> $GITHUB_OUTPUT
+          set -e
+
+          FRONTEND_URL=$(TF_LOG=ERROR terraform output -raw frontend_repository_url)
+          if [ -z "$FRONTEND_URL" ]; then
+            echo "Error: Terraform output 'frontend_repository_url' is empty or not found."
+            exit 1
+          fi
+          echo "frontend_ecr_repo=$FRONTEND_URL" >> $GITHUB_OUTPUT
+
+          BACKEND_URL=$(TF_LOG=ERROR terraform output -raw backend_repository_url)
+          if [ -z "$BACKEND_URL" ]; then
+            echo "Error: Terraform output 'backend_repository_url' is empty or not found."
+            exit 1
+          fi
+          echo "backend_ecr_repo=$BACKEND_URL" >> $GITHUB_OUTPUT
 
   build-and-push:
     needs: deploy-ecr
