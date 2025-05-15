@@ -155,8 +155,9 @@ jobs:
       - name: Deploy ECS Infrastructure
         working-directory: terraform/compute/ecs
         env:
-          TF_VAR_frontend_image: ${{ needs.deploy-ecr.outputs.frontend_ecr_repo }}:${{ github.sha }}
-          TF_VAR_backend_image: ${{ needs.deploy-ecr.outputs.backend_ecr_repo }}:${{ github.sha }}
+          TF_VAR_frontend_image_uri: ${{ needs.deploy-ecr.outputs.frontend_ecr_repo }}:${{ github.sha }}
+          TF_VAR_backend_image_uri: ${{ needs.deploy-ecr.outputs.backend_ecr_repo }}:${{ github.sha }}
+          TF_VAR_database_password: ${{ secrets.DB_PASSWORD }}
         run: |
           terraform init
           terraform plan -out=tfplan

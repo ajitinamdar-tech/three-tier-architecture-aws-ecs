@@ -49,6 +49,8 @@ jobs:
 
       - name: Destroy ECS Infrastructure
         working-directory: terraform/compute/ecs
+        env:
+          TF_VAR_database_password: ${{ secrets.DB_PASSWORD }}
         run: |
           terraform init
           terraform destroy -auto-approve
