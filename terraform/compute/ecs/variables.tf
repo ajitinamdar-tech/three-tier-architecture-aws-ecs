@@ -97,3 +97,9 @@ variable "frontend_desired_count" {
   type        = number
   default     = 1
 }
+
+variable "backend_desired_count" {
+  description = "The desired number of tasks for the backend service."
+  type        = number
+  default     = 1
+}
