@@ -37,7 +37,7 @@ variable "db_name" {
   default     = "appdb"
 }
 
-variable "db_username" {
+variable "db_user" {
   description = "Database username"
   type        = string
   default     = "admin"
