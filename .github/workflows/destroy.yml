@@ -25,6 +25,9 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
+      TF_VAR_db_endpoint: ${{ secrets.DB_ENDPOINT }}
+      TF_VAR_db_user: ${{ secrets.DB_USER }}
+      TF_VAR_db_name: ${{ secrets.DB_NAME }}
     steps:
       - name: Check confirmation
         if: github.event.inputs.confirmation != 'destroy'
