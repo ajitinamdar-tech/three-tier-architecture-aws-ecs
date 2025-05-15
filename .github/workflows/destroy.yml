@@ -10,22 +10,6 @@ on:
       confirmation:
         description: 'Type "destroy" to confirm deletion of all resources'
         required: true
-      destroy_ecs:
-        description: 'Destroy ECS infrastructure? (true/false)'
-        type: boolean
-        default: true
-      destroy_ecr:
-        description: 'Destroy ECR infrastructure? (true/false)'
-        type: boolean
-        default: true
-      destroy_database:
-        description: 'Destroy Database infrastructure? (true/false)'
-        type: boolean
-        default: false
-      destroy_network:
-        description: 'Destroy Network infrastructure? (true/false)'
-        type: boolean
-        default: false
 
 env:
   AWS_REGION: us-east-1
@@ -36,65 +20,46 @@ permissions:
   contents: read
 
 jobs:
-  validate-confirmation:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check confirmation
-        if: github.event.inputs.confirmation != 'destroy'
-        run: |
-          echo "Confirmation word 'destroy' not provided. Aborting destruction."
-          exit 1
 
   destroy-ecs:
-    needs: validate-confirmation
-    if: github.event.inputs.destroy_ecs == true
     runs-on: ubuntu-latest
     env:
       TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
-
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: ${{ env.TF_VERSION }}
           terraform_wrapper: false
-
       - name: Destroy ECS Infrastructure
         working-directory: terraform/compute/ecs
-        env:
-          TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
         run: |
           terraform init
           terraform destroy -auto-approve
 
   destroy-ecr:
     needs: destroy-ecs
-    if: github.event.inputs.destroy_ecr == true && needs.destroy-ecs.result == 'success'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
-
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: ${{ env.TF_VERSION }}
           terraform_wrapper: false
-
       - name: Destroy ECR Infrastructure
         working-directory: terraform/compute/ecr
         run: |
@@ -103,26 +68,22 @@ jobs:
 
   destroy-database:
     needs: destroy-ecr
-    if: github.event.inputs.destroy_database == true && needs.destroy-ecr.result == 'success'
     runs-on: ubuntu-latest
     env:
       TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
-
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: ${{ env.TF_VERSION }}
           terraform_wrapper: false
-
       - name: Destroy Database Infrastructure
         working-directory: terraform/database
         run: |
@@ -131,24 +92,20 @@ jobs:
 
   destroy-network:
     needs: destroy-database
-    if: github.event.inputs.destroy_network == true && needs.destroy-database.result == 'success'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
-
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: ${{ env.TF_VERSION }}
           terraform_wrapper: false
-
       - name: Destroy Network Infrastructure
         working-directory: terraform/network
         run: |
