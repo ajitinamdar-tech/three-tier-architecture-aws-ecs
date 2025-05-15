@@ -94,7 +94,7 @@ resource "aws_ecs_task_definition" "backend" {
       environment = [
         {
           name  = "DB_HOST"
-          value = var.database_host
+          value = data.terraform_remote_state.database.outputs.db_endpoint
         },
         {
           name  = "DB_USER"
@@ -102,7 +102,7 @@ resource "aws_ecs_task_definition" "backend" {
         },
         {
           name  = "DB_PASSWORD"
-          value = var.database_password
+          value = var.db_password
         },
         {
           name  = "DB_NAME"

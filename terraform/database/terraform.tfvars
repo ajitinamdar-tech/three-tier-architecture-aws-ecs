@@ -8,7 +8,7 @@ db_engine = "mysql"
 db_engine_version = "8.0"
 db_name = "appdb"
 db_username = "admin"
-# db_password will be provided by TF_VAR_database_password environment variable
+# db_password will be provided by TF_VAR_db_password environment variable
 db_allocated_storage = 20
 db_storage_type = "gp2"
 

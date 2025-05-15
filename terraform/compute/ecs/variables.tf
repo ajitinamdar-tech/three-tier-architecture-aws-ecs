@@ -86,7 +86,7 @@ variable "database_user" {
   # No default.
 }
 
-variable "database_password" {
+variable "db_password" {
   description = "The password for the database."
   type        = string
   sensitive   = true
