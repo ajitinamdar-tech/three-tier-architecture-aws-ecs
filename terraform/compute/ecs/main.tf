@@ -106,7 +106,7 @@ resource "aws_ecs_task_definition" "backend" {
         },
         {
           name  = "DB_NAME"
-          value = var.database_name
+          value = var.db_name
         }
       ]
       logConfiguration = {
