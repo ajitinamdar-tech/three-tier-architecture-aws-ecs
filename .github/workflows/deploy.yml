@@ -142,6 +142,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Debug ECR outputs and SHA
+        run: |
+          echo "Frontend ECR Repo Output: '${{ needs.deploy-ecr.outputs.frontend_ecr_repo }}'"
+          echo "Backend ECR Repo Output: '${{ needs.deploy-ecr.outputs.backend_ecr_repo }}'"
+          echo "GitHub SHA: '${{ github.sha }}'"
+          echo "Frontend Image URI to be used: '${{ needs.deploy-ecr.outputs.frontend_ecr_repo }}:${{ github.sha }}'"
+          echo "Backend Image URI to be used: '${{ needs.deploy-ecr.outputs.backend_ecr_repo }}:${{ github.sha }}'"
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
