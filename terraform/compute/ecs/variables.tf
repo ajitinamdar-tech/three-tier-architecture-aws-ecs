@@ -92,7 +92,7 @@ variable "db_name" {
   # No default.
 }
 
-variable "database_name" {
+variable "db_name" {
   description = "The name of the database."
   type        = string
   # No default.
