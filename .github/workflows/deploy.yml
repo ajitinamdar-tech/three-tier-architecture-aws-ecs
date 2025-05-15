@@ -103,8 +103,8 @@ jobs:
           TF_LOG: ERROR
         working-directory: terraform/compute/ecr
         run: |
-          echo "frontend_ecr_repo=$(terraform output frontend_repository_url)" >> $GITHUB_OUTPUT
-          echo "backend_ecr_repo=$(terraform output backend_repository_url)" >> $GITHUB_OUTPUT
+          echo "frontend_ecr_repo=$(terraform output -raw frontend_repository_url)" >> $GITHUB_OUTPUT
+          echo "backend_ecr_repo=$(terraform output -raw backend_repository_url)" >> $GITHUB_OUTPUT
 
   build-and-push:
     needs: deploy-ecr
@@ -141,14 +141,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-
-      - name: Debug ECR outputs and SHA
-        run: |
-          echo "Frontend ECR Repo Output: '${{ needs.deploy-ecr.outputs.frontend_ecr_repo }}'"
-          echo "Backend ECR Repo Output: '${{ needs.deploy-ecr.outputs.backend_ecr_repo }}'"
-          echo "GitHub SHA: '${{ github.sha }}'"
-          echo "Frontend Image URI to be used: '${{ needs.deploy-ecr.outputs.frontend_ecr_repo }}:${{ github.sha }}'"
-          echo "Backend Image URI to be used: '${{ needs.deploy-ecr.outputs.backend_ecr_repo }}:${{ github.sha }}'"
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
