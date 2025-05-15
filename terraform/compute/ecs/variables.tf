@@ -92,12 +92,6 @@ variable "db_name" {
   # No default.
 }
 
-variable "db_name" {
-  description = "The name of the database."
-  type        = string
-  # No default.
-}
-
 variable "frontend_desired_count" {
   description = "The desired number of tasks for the frontend service."
   type        = number
