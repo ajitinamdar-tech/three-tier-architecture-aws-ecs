@@ -98,7 +98,7 @@ resource "aws_ecs_task_definition" "backend" {
         },
         {
           name  = "DB_USER"
-          value = var.database_user
+          value = var.db_user
         },
         {
           name  = "DB_PASSWORD"
