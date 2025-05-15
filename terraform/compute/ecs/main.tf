@@ -94,7 +94,7 @@ resource "aws_ecs_task_definition" "backend" {
       environment = [
         {
           name  = "DB_HOST"
-          value = data.terraform_remote_state.database.outputs.db_endpoint
+          value = data.terraform_remote_state.database.outputs.rds_endpoint
         },
         {
           name  = "DB_USER"
